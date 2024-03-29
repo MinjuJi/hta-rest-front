@@ -155,8 +155,11 @@
 		formModal.hide();
 	}
 	
-	// 신규 회원등록폼 모달을 화면에 표시하는 함수다.
-	function showFormModal() {
+	// 신규, 수정 회원등록폼 모달을 화면에 표시하는 함수다.
+	// 신규 -> showFormModal();
+	// 수정 -> showFormModal(10);
+	function showFormModal(memberId) {
+		console.log(memberId)
 		formModal.show();
 	}
 	
@@ -213,7 +216,11 @@
 	// 회원정보를 삭제하는 메소드
 	async function removeMember(memberId)	{
 		// 확인하기 창을 표시한다. 확인을 클릭하면 answer에 true, 취소를 클릭하면 answer에 false 값이 대입된다.
-		let answer = confirm("삭제하시겠습니까?")
+		// find 메소드는 전달받는 함수가 true를 반환하는 그 순간의 배열값을 반환한다.
+		let foundMember = memberList.find(member => member.id == memberId);
+		console.log(foundMember);
+		
+		let answer = confirm(foundMember.name + "님 정보를 삭제하시겠습니까?");
 		
 		if(answer){
 			let response = await fetch(url + "/" + memberId, {
@@ -221,8 +228,20 @@
 				
 			});
 			let jsonData = await response.json();
-			if(jsonData != 200){
-				alert("삭제에 실패하였습니다.");
+			if(jsonData.status == 200){
+				alert(jsonData.message);
+				
+				/*
+				let index = memberList.map(function(member){
+					return member.id
+				}).indexOf(memberId);
+				*/
+				
+				let index = memberList.map(member => member.id).indexOf(memberId);
+				
+				memberList.splice(index, 1);
+				refreshMemberList();
+				
 				return;
 			}
 		}
@@ -234,6 +253,43 @@
 			return;
 		}
 		
+		let rows = memberList.map( (member, index) => 
+			
+			 `
+			<tr>
+				<td>${index + 1}</td>
+				<td>${member.id}</td>
+				<td>${member.email}</td>
+				<td>${member.name}</td>
+				<td>
+					<button class="btn btn-outline-danger btn-sm" onclick="removeMember(${member.id})">삭제</button>
+					<button class="btn btn-outline-warning btn-sm" onclick="showFormModal(${member.id})">수정</button>
+				</td>
+			</tr>
+			`
+			
+		).join("");
+		tbody.innerHTML = rows;
+/*		
+		
+		let rows = memberList.map(function(member, index){
+			return `
+				<tr>
+					<td>${index + 1}</td>
+					<td>${member.id}</td>
+					<td>${member.email}</td>
+					<td>${member.name}</td>
+					<td>
+						<button class="btn btn-outline-danger btn-sm" onclick="removeMember(${member.id})">삭제</button>
+						<button class="btn btn-outline-warning btn-sm" onclick="showFormModal(${member.id})">수정</button>
+					</td>
+				</tr>
+			`
+		}).join("");
+		tbody.innerHTML = rows;
+*/
+		
+/*
 		let rows="";
 		memberList.forEach(function(member, index){
 			rows += `
@@ -249,6 +305,8 @@
 				</tr>
 			`;
 		});
+*/
+
 /*		
 		let rows="";
 		for(let index = 0; index < memberList.length; index++){
@@ -268,7 +326,6 @@
 			`;
 		}
 */
-		tbody.innerHTML = rows;
 	}
 getMembers();
 </script>
