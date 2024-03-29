@@ -46,7 +46,7 @@
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h5 class="modal-title">Modal title</h5>
+				<h5 class="modal-title" id="modal-title-member">회원정보 입력폼</h5>
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<div class="modal-body">
@@ -72,7 +72,7 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary"	data-bs-dismiss="modal">닫기</button>
-				<button type="button" class="btn btn-primary" onclick="createMember()">등록</button>
+				<button type="button" class="btn btn-primary" onclick="createMember()" id="btn-ok">등록</button>
 			</div>
 		</div>
 	</div>
@@ -159,8 +159,51 @@
 	// 신규 -> showFormModal();
 	// 수정 -> showFormModal(10);
 	function showFormModal(memberId) {
-		console.log(memberId)
+		if(memberId){ // memberId가 undefined가 아닐 때 true로 판정된다.
+			
+			document.querySelector("#modal-title-member").textContent = "회원정보 수정화면"
+			// 수정하기 위해서 모달창을 연 경우
+			let foundMember = memberList.find(m => m.id == memberId);
+			
+			document.querySelector('input[name=email]').value = foundMember.email;
+			document.querySelector('input[name=name]').value = foundMember.name;
+			document.querySelector('input[name=tel]').value = foundMember.tel;
+			
+			document.querySelector("#btn-ok").setAttribute("onclick", "updateMember(" + memberId + ")");
+		} else {
+			document.querySelector("#modal-title-member").textContent = "회원정보 등록화면"
+			document.querySelector("#btn-ok").setAttribute("onclick", "createMember()");
+		}
 		formModal.show();
+	}
+	
+	async function updateMember(memberId){
+		let data = {
+				email: document.querySelector("input[name=email]").value,
+				password: document.querySelector("input[name=password]").value,
+				name: document.querySelector("input[name=name]").value,
+				tel: document.querySelector("input[name=tel]").value
+		}
+		
+		let response = await fetch(url + "/" + memberId, {
+			method: "PUT",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(data)
+		});
+		let jsonData = await response.json();
+		// jsonData -> {status:200, message:"OK", items:[{id:20, email:"hong@gmail.com", password:"zxcv1234", name: "홍길동", ...}]}
+		if(jsonData.status == 200){
+			// 수정된 회원정보를 가져온다.
+			let updatedMember = jsonData.items[0];
+			// 수정 전 회원정보의 배열에 저장된 인덱스를 조회한다.
+			let index = memberList.findIndex(m => m.id == updatedMember.id);
+			// 위에서 조회한 인덱스번째 데이터를 1개 삭제하고, 그 위치에 수정된 회원정보를 추가한다.
+			memberList.splice(index, 1, updatedMember);
+			refreshMemberList();
+		}
+		formModal.hide();
 	}
 	
 	// 전체 회원정보를 조회하는 함수
